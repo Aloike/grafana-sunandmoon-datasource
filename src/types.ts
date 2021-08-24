@@ -118,6 +118,16 @@ export const sunAndMoonAnnotations: any = {
     text: "12 o'clock in the night",
     tags: ['time'],
   },
+  nightRegion: {
+    title: 'Night',
+    text: "Dark enough for astronomical observations.",
+    tags: ["sun","night"],
+  },
+  sunRegion: {
+    title: 'Daytime',
+    text: "Natural illumination from direct sunlight.",
+    tags: ["sun","daytime"],
+  },
 };
 
 export interface SunAndMoonQuery extends DataQuery {
