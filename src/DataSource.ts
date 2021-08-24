@@ -117,14 +117,25 @@ export class SunAndMoonDataSource extends DataSourceApi<SunAndMoonQuery, SunAndM
       return events;
     }
 
+    // "Targets" are the types of events to show on the dashboard.
+    // They are declared as a comma-separated list.
+    // Here we just create an array with all the values.
     let targets = ['*'];
     if (options.annotation.query !== undefined) {
       targets = options.annotation.query.split(/\s*[\s,]\s*/);
     }
 
+
+    // -------------------------------------------------------------------------
+    // Iterate over each day of the requested range.
+    // -------------------------------------------------------------------------
     for (const date = from; date < to; date.add(1, 'days')) {
+      const lDateNextDay = dateTime(date);
+      lDateNextDay.add(1, 'days');
+
       const sunTimes = SunCalc.getTimes(date.toDate(), this.latitude!, this.longitude!);
       const moonTimes = SunCalc.getMoonTimes(date.toDate(), this.latitude!, this.longitude!);
+      const sunTimesNextDay = SunCalc.getTimes(lDateNextDay.toDate(), this.latitude!, this.longitude!);
 
       // Merge sun and moon times (prefix moon times with moon).
       const values = merge(
@@ -157,7 +168,36 @@ export class SunAndMoonDataSource extends DataSourceApi<SunAndMoonQuery, SunAndM
         };
         events.push(event);
       }
-    }
+
+      // Add "Night" region
+      if (targets.includes('*') || targets.indexOf("nightRegion") >= 0) {
+        const event: AnnotationEvent = {
+          time: +sunTimes["night"]!.valueOf(),
+          timeEnd: +sunTimesNextDay["nightEnd"]!.valueOf(),
+          title: "Night",
+          text: "Dark enough for astronomical observations.",
+          tags: ["sun","night"],
+          isRegion: false,
+          color: "blue",
+        };
+        events.push(event);
+      }
+
+      // Add "Sun" region
+      if (targets.includes('*') || targets.indexOf("sunRegion") >= 0) {
+        const event: AnnotationEvent = {
+          time: +sunTimes["sunrise"]!.valueOf(),
+          timeEnd: +sunTimes["sunset"]!.valueOf(),
+          title: "Daytime",
+          text: "Natural illumination from direct sunlight.",
+          tags: ["sun","daytime"],
+          // isRegion: false,
+          color: "yellow",
+        };
+        events.push(event);
+      }
+
+    } //< End of day iteration
 
     return events;
   }
